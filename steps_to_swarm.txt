@@ -1,0 +1,48 @@
+-----------------------------------------------------------
+MANAGER
+-----------------------------------------------------------
+root@manager01:~# ip a
+->159.203.24.31
+-----------------------------------------------------------
+root@manager01:~# docker swarm init --advertise-addr 159.203.24.31
+Swarm initialized: current node (dlerf4iv14hjbe0ipi0jeclqe) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-096i36edyw2hxhew2ir5ogc7dt0al57oht3i7sasi8y89f2bb4-6ajck3z2g3a42u7okqu1f3axw 159.203.24.31:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+-----------------------------------------------------------
+root@manager01:~# ss -tulpn
+Netid     State       Recv-Q      Send-Q            Local Address:Port           Peer Address:Port                                                                                                              
+udp       UNCONN      0           0                 127.0.0.53%lo:53                  0.0.0.0:*          users:(("systemd-resolve",pid=623,fd=12))                                                              
+udp       UNCONN      0           0                       0.0.0.0:4789                0.0.0.0:*                                                                                                                 
+udp       UNCONN      0           0                             *:7946                      *:*          users:(("dockerd",pid=812,fd=29))                                                                      
+tcp       LISTEN      0           128               127.0.0.53%lo:53                  0.0.0.0:*          users:(("systemd-resolve",pid=623,fd=13))                                                              
+tcp       LISTEN      0           128                     0.0.0.0:22                  0.0.0.0:*          users:(("sshd",pid=808,fd=3))                                                                          
+tcp       LISTEN      0           128                           *:2377                      *:*          users:(("dockerd",pid=812,fd=22))                                                                      
+tcp       LISTEN      0           128                           *:7946                      *:*          users:(("dockerd",pid=812,fd=28))                                                                      
+tcp       LISTEN      0           128                        [::]:22                     [::]:*          users:(("sshd",pid=808,fd=4))     
+-----------------------------------------------------------
+
+
+-----------------------------------------------------------
+WORKER01
+-----------------------------------------------------------
+
+
+-----------------------------------------------------------
+-----------------------------------------------------------
+-----------------------------------------------------------
+-----------------------------------------------------------
+-----------------------------------------------------------
+-----------------------------------------------------------
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+
+
+
+Doc:
+https://www.digitalocean.com/community/tutorials/how-to-create-a-cluster-of-docker-containers-with-docker-swarm-and-digitalocean-on-ubuntu-16-04
+
