@@ -2,6 +2,31 @@
 MANAGER
 -----------------------------------------------------------
 root@manager01:~# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 8a:d3:c4:d6:a4:87 brd ff:ff:ff:ff:ff:ff
+    inet 159.203.24.31/20 brd 159.203.31.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet 10.20.0.5/16 brd 10.20.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::88d3:c4ff:fed6:a487/64 scope link 
+       valid_lft forever preferred_lft forever
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether c6:a5:0c:08:67:c4 brd ff:ff:ff:ff:ff:ff
+    inet 10.137.224.247/16 brd 10.137.255.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::c4a5:cff:fe08:67c4/64 scope link 
+       valid_lft forever preferred_lft forever
+4: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:d6:f6:4d:34 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+
 ->159.203.24.31
 -----------------------------------------------------------
 root@manager01:~# docker swarm init --advertise-addr 159.203.24.31
@@ -27,9 +52,143 @@ tcp       LISTEN      0           128                        [::]:22            
 
 
 -----------------------------------------------------------
-WORKER01
+WORKERS
+-----------------------------------------------------------
+root@worker01:~# docker swarm join --token SWMTKN-1-096i36edyw2hxhew2ir5ogc7dt0al57oht3i7sasi8y89f2bb4-6ajck3z2g3a42u7okqu1f3axw 159.203.24.31:2377
+This node joined a swarm as a worker.
 -----------------------------------------------------------
 
+
+
+-----------------------------------------------------------
+MANAGER
+-----------------------------------------------------------
+root@manager01:~# docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+dlerf4iv14hjbe0ipi0jeclqe *   manager01           Ready               Active              Leader              19.03.3
+ism422cvhskottaida8qhik6x     worker01            Ready               Active                                  19.03.3
+63hv1oqoa4poakvq2egevwcoa     worker02            Ready               Active                                  19.03.3
+vch2px7g4l0thm34laj1pscfz     worker03            Ready               Active                                  19.03.3
+-----------------------------------------------------------
+root@manager01:~# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 8a:d3:c4:d6:a4:87 brd ff:ff:ff:ff:ff:ff
+    inet 159.203.24.31/20 brd 159.203.31.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet 10.20.0.5/16 brd 10.20.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::88d3:c4ff:fed6:a487/64 scope link 
+       valid_lft forever preferred_lft forever
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether c6:a5:0c:08:67:c4 brd ff:ff:ff:ff:ff:ff
+    inet 10.137.224.247/16 brd 10.137.255.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::c4a5:cff:fe08:67c4/64 scope link 
+       valid_lft forever preferred_lft forever
+4: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:d6:f6:4d:34 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+9: docker_gwbridge: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:24:9a:14:09 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.0.1/16 brd 172.18.255.255 scope global docker_gwbridge
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:24ff:fe9a:1409/64 scope link 
+       valid_lft forever preferred_lft forever
+11: veth069ad1e@if10: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker_gwbridge state UP group default 
+    link/ether ca:84:72:52:3d:9f brd ff:ff:ff:ff:ff:ff link-netnsid 1
+    inet6 fe80::c884:72ff:fe52:3d9f/64 scope link 
+       valid_lft forever preferred_lft forever
+
+-----------------------------------------------------------
+service
+-----------------------------------------------------------
+root@manager01:~# docker service create --name jelou-world crccheck/hello-world
+m6kwi94lj8dty4yhnzxx7osn3
+overall progress: 0 out of 1 tasks 
+overall progress: 1 out of 1 tasks 
+1/1: running   [==================================================>] 
+verify: Service converged 
+root@manager01:~# docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE                         PORTS
+m6kwi94lj8dt        jelou-world         replicated          1/1                 crccheck/hello-world:latest   
+root@manager01:~# 
+---------------------------------------------------------------
+root@manager01:~# docker service update -p 8000:8000 jelou-world
+unknown shorthand flag: 'p' in -p
+See 'docker service update --help'.
+root@manager01:~# docker service update --publish-add 8000:8000 jelou-world
+jelou-world
+overall progress: 1 out of 1 tasks 
+1/1: running   [==================================================>] 
+verify: Service converged 
+root@manager01:~# docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE                         PORTS
+m6kwi94lj8dt        jelou-world         replicated          1/1                 crccheck/hello-world:latest   *:8000->8000/tcp
+root@manager01:~# ss -tlpn
+State               Recv-Q               Send-Q                              Local Address:Port                             Peer Address:Port                                                                      
+LISTEN              0                    128                                 127.0.0.53%lo:53                                    0.0.0.0:*                  users:(("systemd-resolve",pid=623,fd=13))              
+LISTEN              0                    128                                       0.0.0.0:22                                    0.0.0.0:*                  users:(("sshd",pid=808,fd=3))                          
+LISTEN              0                    128                                             *:2377                                        *:*                  users:(("dockerd",pid=812,fd=22))                      
+LISTEN              0                    128                                             *:7946                                        *:*                  users:(("dockerd",pid=812,fd=28))                      
+LISTEN              0                    128                                          [::]:22                                       [::]:*                  users:(("sshd",pid=808,fd=4))                          
+LISTEN              0                    128                                             *:8000                                        *:*                  users:(("dockerd",pid=812,fd=42))                      
+root@manager01:~# 
+
+-----------------------------------------------------------
+root@manager01:~# docker service update --replicas 3 jelou-world
+jelou-world
+overall progress: 3 out of 3 tasks 
+1/3: running   [==================================================>] 
+2/3: running   [==================================================>] 
+3/3: running   [==================================================>] 
+verify: Service converged 
+root@manager01:~# docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE                         PORTS
+m6kwi94lj8dt        jelou-world         replicated          3/3                 crccheck/hello-world:latest   *:8000->8000/tcp
+root@manager01:~# docker service ps jelou-world
+ID                  NAME                IMAGE                         NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+j9bnf0vaqak6        jelou-world.1       crccheck/hello-world:latest   manager01           Running             Running 5 minutes ago                        
+vog3b5ioe3tb         \_ jelou-world.1   crccheck/hello-world:latest   manager01           Shutdown            Shutdown 5 minutes ago                       
+ja3uvuub65sc        jelou-world.2       crccheck/hello-world:latest   worker03            Running             Running 54 seconds ago                       
+dvjzp48zegvj        jelou-world.3       crccheck/hello-world:latest   worker01            Running             Running 54 seconds ago                       
+root@manager01:~# 
+
+-----------------------------------------------------------
+root@manager01:~# docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE                         PORTS
+m6kwi94lj8dt        jelou-world         replicated          3/3                 crccheck/hello-world:latest   *:8000->8000/tcp
+root@manager01:~# docker service rm jelou-world
+jelou-world
+root@manager01:~# docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+root@manager01:~# docker service create --name jelou-world -p 8000:8000 --mode global  crccheck/hello-world
+l98bdx54pu2ioweij81h0u26c
+overall progress: 4 out of 4 tasks 
+vch2px7g4l0t: running   [==================================================>] 
+63hv1oqoa4po: running   [==================================================>] 
+dlerf4iv14hj: running   [==================================================>] 
+ism422cvhsko: running   [==================================================>] 
+verify: Service converged 
+root@manager01:~# docker service ps jelou-world
+ID                  NAME                                    IMAGE                         NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
+zjxr17l4s5to        jelou-world.63hv1oqoa4poakvq2egevwcoa   crccheck/hello-world:latest   worker02            Running             Running about a minute ago                       
+pqz63axz651x        jelou-world.vch2px7g4l0thm34laj1pscfz   crccheck/hello-world:latest   worker03            Running             Running about a minute ago                       
+ljk3ldq6i855        jelou-world.ism422cvhskottaida8qhik6x   crccheck/hello-world:latest   worker01            Running             Running about a minute ago                       
+8tevwz6k56ch        jelou-world.dlerf4iv14hjbe0ipi0jeclqe   crccheck/hello-world:latest   manager01           Running             Running about a minute ago                       
+root@manager01:~# 
+
+-----------------------------------------------------------
+
+-----------------------------------------------------------
+https://forums.docker.com/t/autoscaling-in-docker-swarm/44353/6
+-----------------------------------------------------------
 
 -----------------------------------------------------------
 -----------------------------------------------------------
