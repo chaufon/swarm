@@ -1,6 +1,6 @@
 NODES
 apt-get update -y && apt-get install -y nginx
-vim /var/ww/html/index.nginx-debian.html  (colocar identificador de cada servidor)
+vim /var/ww/html/index.nginx-debian.html (colocar identificador de cada servidor:<title>Welcome to nginx 02!</title>)
 systemctl restart nginx
 systemctl enable nginx
 
