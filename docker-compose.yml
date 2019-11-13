@@ -6,10 +6,6 @@ services:
     restart: always
     container_name: wordpress
     environment:
-      VIRTUAL_HOST: wordpress.euqor.ml
-      #      VIRTUAL_PORT: 80
-      LETSENCRYPT_HOST: wordpress.euqor.ml
-      LETSENCRYPT_EMAIL: carlos.laurente@globalip.pe
       WORDPRESS_DB_HOST: mysql
       WORDPRESS_DB_USER: wpuser
       WORDPRESS_DB_PASSWORD: wppassjsajsjasjajajaj
