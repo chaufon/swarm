@@ -1,5 +1,5 @@
 #!/bin/bash
-#apt update && apt upgrade -y 
+apt update && apt upgrade -y 
 apt-get -y install apt-transport-https ca-certificates curl gnupg-agent   software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 apt-key fingerprint 0EBFCD88
