@@ -1,0 +1,65 @@
+Previous
+
+Add Volume to each droplet named volume-nyc3-01 (5GB/Formated/check name)
+
+1.- Update /etc/hosts (all droplets)
+127.0.0.1       localhost
+10.132.53.101   server-01
+10.132.21.111   server-02
+10.132.42.10    server-03
+
+
+2.- Each volume has a fs and it is already mounted (do nothing)
+
+
+3.- Create a brick folder inside each mounting point (all droplets)
+mkdir  /mnt/volume_nyc3_01/brick
+
+
+4.- Install GlusterFS (all droplets)
+add-apt-repository ppa:gluster/glusterfs-7
+
+apt -y install glusterfs-server
+
+systemctl enable glusterd
+
+systemctl enable glusterd
+
+
+5.- Peering (only on server-01)
+gluster peer probe server-02
+gluster peer probe server-03
+gluster peer status
+
+
+6.- Create Volumen (only on server-01)
+gluster volume create gfs \
+replica 3 \
+server-01:/mnt/volume_nyc3_01/brick \
+server-02:/mnt/volume_nyc3_02/brick \
+server-03:/mnt/volume_nyc3_03/brick 
+
+gluster volume start gfs
+
+gluster volume status gfs
+
+gluster volume info gfs
+
+
+7.- Security (only on server-01)
+gluster volume set gfs auth.allow 10.132.53.101,10.132.21.111,10.132.42.10 
+
+
+8.- Mounting (all droplets)
+mkdir /data 
+
+echo 'localhost:/gfs /data glusterfs defaults,_netdev,backupvolfile-server=localhost 0 0' >> /etc/fstab
+
+mount.glusterfs localhost:/gfs /data
+
+
+9.-Create folders for each Swarm service (all droplets)
+mkdir /data/web
+mkdir /data/db
+
+https://medium.com/running-a-software-factory/setup-3-node-high-availability-cluster-with-glusterfs-and-docker-swarm-b4ff80c6b5c3
