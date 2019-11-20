@@ -9,6 +9,5 @@ Instructions
 
 1. install_docker.sh
 2. install_glusterfs
-3. install_swarm
-4. install_mariadb
+3. install_swarm_and_services
 
