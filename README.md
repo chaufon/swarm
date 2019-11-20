@@ -7,8 +7,8 @@ Each Droplet has a 5GB volume attach and formatted with XFS, mounted on /mnt/vol
 
 Instructions
 
-install_docker.sh
-install_glusterfs
-install_swarm
-install_mariadb
+1. install_docker.sh
+2. install_glusterfs
+3. install_swarm
+4. install_mariadb
 
