@@ -10,4 +10,6 @@ Instructions
 1. install_docker.sh
 2. install_glusterfs
 3. install_swarm_and_services
+4. backup as a service on swarm (pending)
+5. recovering after poweroff (pending)
 
