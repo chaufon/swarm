@@ -1,0 +1,31 @@
+1. docker swarm init --advertise-addr 159.203.24.31 (server-01)
+
+2. docker swarm join --token SWMTKN-1-096i36edyw2hxhew2ir5ogc7dt0al57oht3i7sasi8y89f2bb4-6ajck3z2g3a42u7okqu1f3axw 159.203.24.31:2377 (server-02 y server-03)
+
+**Next steps only on server-01**
+
+3. docker network create --driver overlay db_network
+
+4. docker service create --name db_cluster \
+--network db_network \
+--replicas=1 \
+--env DB_SERVICE_NAME=db_cluster \
+--env MYSQL_ROOT_PASSWORD=rootpsadasdasd246h5uj78k6j5h4ass \
+--env MYSQL_DATABASE=wpdb \
+--env MYSQL_USER=wpdbuser \
+--env MYSQL_PASSWORD=wpd25245767897965345343bpass \
+toughiq/mariadb-cluster
+
+5- docker service scale db_cluster=3
+
+6. docker service create --name wp \
+--network db_network \
+--mount type=bind,src=/data/web,dst=/var/www/html \
+--publish target=80,published=10000 \
+--env WORDPRESS_DB_HOST=db_cluster \
+--env WORDPRESS_DB_USER=wpdbuser \
+--env WORDPRESS_DB_NAME=wpdb \
+--env WORDPRESS_DB_PASSWORD=wpd25245767897965345343bpass \
+--mode global  wordpress
+
+> https://hub.docker.com/r/toughiq/mariadb-cluster
