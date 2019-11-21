@@ -20,6 +20,9 @@ toughiq/mariadb-cluster
 
 5- docker service scale db_cluster=3
 
+> https://hub.docker.com/r/toughiq/mariadb-cluster
+
+
 **Web Cluster**
 
 6. docker service create --name wp \
@@ -32,7 +35,6 @@ toughiq/mariadb-cluster
 --env WORDPRESS_DB_PASSWORD=wpd25245767897965345343bpass \
 --mode global  wordpress
 
-> https://hub.docker.com/r/toughiq/mariadb-cluster
 
 **BACKUP**
 
@@ -79,5 +81,7 @@ networks:
     external:
       name: db_network
 
-8. Deplor that file
+>https://blog.ruanbekker.com/blog/2019/05/10/running-a-ha-mysql-galera-cluster-on-docker-swarm/
+
+8. Deploy that file
 docker stack deploy -c backup_mysql.yml bak
