@@ -1,5 +1,0 @@
-alias vim='nvim'
-alias manager_docker='ssh -l root 159.203.24.31'
-alias worker01='ssh -l root 159.203.16.166'
-alias worker02='ssh -l root 159.203.38.206'
-alias worker03='ssh -l root 159.203.33.254'
