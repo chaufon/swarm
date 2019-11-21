@@ -6,6 +6,8 @@
 
 3. docker network create --driver overlay db_network
 
+**DB Cluster**
+
 4. docker service create --name db_cluster \
 --network db_network \
 --replicas=1 \
@@ -18,6 +20,8 @@ toughiq/mariadb-cluster
 
 5- docker service scale db_cluster=3
 
+**Web Cluster**
+
 6. docker service create --name wp \
 --network db_network \
 --mount type=bind,src=/data/web,dst=/var/www/html \
@@ -29,3 +33,51 @@ toughiq/mariadb-cluster
 --mode global  wordpress
 
 > https://hub.docker.com/r/toughiq/mariadb-cluster
+
+**BACKUP**
+
+7. Create a yml file backup_mysql.yml
+version: '3.5'
+services:
+  dbclient:
+    image: alpine
+    environment:
+      - BACKUP_ENABLED=1
+      - BACKUP_INTERVAL=3600
+      - BACKUP_PATH=/data/db
+      - BACKUP_FILENAME=db_backup
+      - DB_HOST=db_cluster
+      - DB_USER=wpdbuser
+      - DB_NAME=wpdb
+      - DB_PASSWORD=wpd25245767897965345343bpass
+    networks:
+      - db_network
+    entrypoint: |
+      sh -c 'sh -s << EOF
+      apk add --no-cache mysql-client
+      while true
+        do
+          if [ $$BACKUP_ENABLED == 1 ]
+            then
+              sleep $$BACKUP_INTERVAL
+              mkdir -p $$BACKUP_PATH/$$(date +%F)
+              echo "$$(date +%FT%H.%m) - Making Backup to : $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz"
+              mysqldump -u $$DB_USER  -p$$DB_PASSWORD -h $$DB_HOST --all-databases | gzip > $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz
+              find $$BACKUP_PATH -mtime 7 -delete
+          fi
+        done
+      EOF'
+    volumes:
+      - type: bind
+        source: /data/db
+        target: /data/db
+    deploy:
+      mode: replicated
+      replicas: 1
+networks:
+  db_network:
+    external:
+      name: db_network
+
+8. Deplor that file
+docker stack deploy -c backup_mysql.yml bak
