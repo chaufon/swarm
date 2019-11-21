@@ -10,6 +10,5 @@ Instructions
 1. install_docker.sh
 2. install_glusterfs (check add_volume_to_droplet.png)
 3. install_swarm_and_services
-4. backup as a service on swarm (pending)
-5. recovering after poweroff (pending)
+4. recovering after poweroff (pending)
 
