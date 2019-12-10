@@ -1,0 +1,219 @@
+Droplet with private networking
+
+
+apt-get update && apt-get -y upgrade && apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+
+ add-apt-repository 'deb [arch=amd64] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.4/ubuntu bionic main'
+
+apt -y install mariadb-server-10.4 rsync mytop iftop
+
+systemctl disable mysql
+systemctl stop mysql
+reboot
+
+vim /etc/mysql/conf.d/galera.cnf
+[mysqld]
+binlog_format=ROW
+default-storage-engine=innodb
+innodb_autoinc_lock_mode=2
+bind-address=0.0.0.0
+
+#Galera Provider Config
+wsrep_on=ON
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+
+
+#GAlera Cluser conf
+wsrep_cluster_name="fquispe_cluster"
+wsrep_cluster_address="gcomm://10.132.53.101,10.132.21.111,10.132.42.10"
+
+#Galera Sync configurarion
+wsrep_sst_method=rsync
+
+#Galera Node Conf
+wsrep_node_address="10.132.53.101"
+wsrep_node_name="server-01"
+
+
+-----
+Replicate conf en los demás nodos (check wsrep_node_address y wsrep_node_name)
+-----
+On Node01
+galera_new_cluster
+
+----
+On other nodes
+systemctl start mysql
+
+OBS:  No reconocía MySQL
+systemctl enable mariadb.service
+systemctl start mariadb
+
+--- 
+check on all nodes
+mysql -u root -p -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
+
+
+
+https://www.digitalocean.com/community/tutorials/how-to-configure-a-galera-cluster-with-mariadb-on-ubuntu-18-04-servers
+---
+Optimizing:
+
+[mysqld]
+query_cache_size=0
+query_cache_type=0
+binlog_format=ROW
+default-storage-engine=innodb
+innodb_autoinc_lock_mode=2
+bind-address=0.0.0.0
+
+https://dev.mysql.com/doc/refman/5.5/en/query-cache-configuration.html
+
+
+-------------------------------------------------
+-------------------------------------------------
+HA Proxy load balancing 
+
+1.- On load balancing server
+vim /etc/hosts
+10.132.117.248  demo01
+10.132.72.234   demo02
+10.132.73.94    demo03
+
+2.- All 03 nodes
+wget https://raw.githubusercontent.com/olafz/percona-clustercheck/master/clustercheck
+
+vim clustercheck
+MYSQL_USERNAME="${MYSQL_USERNAME:=clustercheckuser}"
+
+chmod +x clustercheck
+mv clustercheck /usr/bin/
+
+2.- Install packages
+apt -y install  xinetd
+
+3.-  Conf Xinetd
+vim  /etc/xinetd.d/mysqlcheck
+# default: on
+# description: mysqlchk
+service mysqlchk
+{
+        disable = no
+        flags = REUSE IPV4
+        socket_type = stream
+        port = 9200             # This port used by xinetd for clustercheck
+        wait = no
+        user = nobody
+        server = /usr/bin/clustercheck
+        log_on_failure += USERID
+        only_from = 0.0.0.0/0
+        per_source = UNLIMITED
+}
+
+vim /etc/services
+mysqlchk        9200/tcp                        #mysqlchk
+
+systemctl start xinetd
+systemctl enable xinetd
+
+#Check weather port is open or not
+ss -tulpn
+tcp   LISTEN  0       64              0.0.0.0:9200         0.0.0.0:*      users:(("xinetd",pid=905,fd=5)) 
+
+#CrearMysql User
+    mysql -u root -p
+
+    GRANT PROCESS ON *.* TO 'clustercheckuser'@'localhost' IDENTIFIED BY 'clustercheckpassword!';
+
+    exit;
+
+#Test script
+root@demo01:~# clustercheck 
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Connection: close
+Content-Length: 40
+
+Percona XtraDB Cluster Node is synced.
+
+
+-------------------------------------------------
+HAPROXY
+-------------------------------------------------
+
+apt-get update && apt-get -y upgrade && apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+
+ add-apt-repository 'deb [arch=amd64] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.4/ubuntu bionic main'
+
+apt -y install mariadb-client iftop haproxy
+
+reboot
+
+cd /etc/haproxy/
+cp haproxy.cfg haproxy.cfg.default
+vim haproxy.cfg
+global
+        log 127.0.0.1   local2
+        maxconn 10240
+        user haproxy
+        group haproxy
+        daemon
+        stats socket /var/run/haproxy.sock mode 600 level admin         # Make sock file for haproxy
+
+defaults
+        log     global
+        mode    http
+        option  tcplog
+        option  dontlognull
+        retries 3
+        option  redispatch
+        maxconn 1024
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+
+listen mariadb_cluster
+## MariaDB balance leastconn - the cluster listening on port 3030.
+        bind *:3306
+        mode tcp
+        balance roundrobin
+        option httpchk
+        server nodo-06  10.136.96.126:3306 check port 9200
+        server nodo-07  10.136.254.118:3306 check port 9200
+
+listen stats
+## HAProxy stats web gui running on port 9000 - username and password: howtoforge.
+        bind *:9000
+        mode http
+        stats enable
+        stats uri /stats
+        stats realm HAProxy\ Statistics
+        stats auth admin:fquispe2019
+        stats admin if TRUE
+
+*****Validar*****
+
+vim  /etc/rsyslog.conf
+# provides UDP syslog reception
+module(load="imudp")
+input(type="imudp" port="51")
+
+
+vim /etc/rsyslog.d/haproxy.conf
+local2.=info     /var/log/haproxy-access.log
+local2.notice    /var/log/haproxy-info.log
+
+systemctl restart rsyslog
+
+******************
+#On one of thenodes
+mysql -p
+GRANT ALL PRIVILEGES ON *.* TO admin@'%' IDENTIFIED BY "aqweiogjgioerhrr8347345934feemdnvzaekwyq'wdsi26123";
+
+
+systemctl start haproxy
+systemctl enable haproxy
+
+
+https://www.howtoforge.com/tutorial/how-to-setup-haproxy-as-load-balancer-for-mariadb-on-centos-7/
+
