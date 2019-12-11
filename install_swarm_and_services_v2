@@ -1,0 +1,100 @@
+1. docker swarm init --advertise-addr 159.203.24.31 (server-01)
+
+2. docker swarm join --token SWMTKN-1-096i36edyw2hxhew2ir5ogc7dt0al57oht3i7sasi8y89f2bb4-6ajck3z2g3a42u7okqu1f3axw 159.203.24.31:2377 (server-02 y server-03)
+
+**Next steps only on server-01**
+
+3. docker network create --driver overlay db_network
+
+**DB Cluster**
+
+4. docker service create --name db_cluster \
+--network db_network \
+--replicas=1 \
+--env DB_SERVICE_NAME=db_cluster \
+--env MYSQL_ROOT_PASSWORD=rootpsadasdasd246h5uj78k6j5h4ass \
+--env MYSQL_DATABASE=wpdb \
+--env MYSQL_USER=wpdbuser \
+--env MYSQL_PASSWORD=wpd25245767897965345343bpass \
+--replicas-max-per-node 1 \
+--constraint 'node.role==worker' \
+toughiq/mariadb-cluster
+
+5- docker service scale db_cluster=3
+
+> https://hub.docker.com/r/toughiq/mariadb-cluster
+
+5.5.- Install HA proxy docker
+
+NFS Volume
+
+docker volume create --driver local \
+    --opt type=nfs \
+    --opt o=addr=10.132.178.251,rw \
+    --opt device=:/data \
+    web_volume
+    
+
+6. docker service create --name wp \
+--network db_network \
+--mount type=volume,src=web_volume,dst=/var/www/html \
+--publish target=80,published=10000 \
+--env WORDPRESS_DB_HOST=db_cluster \
+--env WORDPRESS_DB_USER=wpdbuser \
+--env WORDPRESS_DB_NAME=wpdb \
+--env WORDPRESS_DB_PASSWORD=wpd25245767897965345343bpass \
+--replicas=2 \
+--replicas-max-per-node 1 \
+--constraint 'node.role==worker' \
+wordpress
+
+
+**BACKUP**
+
+7. Create a yml file backup_mysql.yml
+version: '3.5'
+services:
+  dbclient:
+    image: alpine
+    environment:
+      - BACKUP_ENABLED=1
+      - BACKUP_INTERVAL=3600
+      - BACKUP_PATH=/data/db
+      - BACKUP_FILENAME=db_backup
+      - DB_HOST=db_cluster
+      - DB_USER=wpdbuser
+      - DB_NAME=wpdb
+      - DB_PASSWORD=wpd25245767897965345343bpass
+    networks:
+      - db_network
+    entrypoint: |
+      sh -c 'sh -s << EOF
+      apk add --no-cache mysql-client
+      while true
+        do
+          if [ $$BACKUP_ENABLED == 1 ]
+            then
+              sleep $$BACKUP_INTERVAL
+              mkdir -p $$BACKUP_PATH/$$(date +%F)
+              echo "$$(date +%FT%H.%m) - Making Backup to : $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz"
+              mysqldump -u $$DB_USER  -p$$DB_PASSWORD -h $$DB_HOST --all-databases | gzip > $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz
+              find $$BACKUP_PATH -mtime 7 -delete
+          fi
+        done
+      EOF'
+    volumes:
+      - type: bind
+        source: /data/db
+        target: /data/db
+    deploy:
+      mode: replicated
+      replicas: 1
+networks:
+  db_network:
+    external:
+      name: db_network
+
+>https://blog.ruanbekker.com/blog/2019/05/10/running-a-ha-mysql-galera-cluster-on-docker-swarm/
+
+8. Deploy that file
+docker stack deploy -c backup_mysql.yml bak
