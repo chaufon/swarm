@@ -20,20 +20,21 @@
 --constraint 'node.role==worker' \
 toughiq/mariadb-cluster
 
-5- docker service scale db_cluster=3
+5- docker service scale db_cluster=2 (tenemos solo dos workers y la bd y web correrán en workers solamente)
 
 > https://hub.docker.com/r/toughiq/mariadb-cluster
 
-5.5.- Install HA proxy docker
+(Se resalta que para este escenario no se ha instalado HAproxy, sino se usa el balanceador provisto por el mismo Swarm)
 
-NFS Volume
+5.5.- NFS Volume
 
 docker volume create --driver local \
     --opt type=nfs \
     --opt o=addr=10.132.178.251,rw \
     --opt device=:/data \
     web_volume
-    
+
+> https://docs.docker.com/engine/reference/commandline/volume_create/
 
 6. docker service create --name wp \
 --network db_network \
@@ -50,6 +51,11 @@ wordpress
 
 
 **BACKUP**
+
+6.5 Create volume on Manager to store backups
+
+docker volume create db_backup_data
+
 
 7. Create a yml file backup_mysql.yml
 version: '3.5'
@@ -77,18 +83,21 @@ services:
               sleep $$BACKUP_INTERVAL
               mkdir -p $$BACKUP_PATH/$$(date +%F)
               echo "$$(date +%FT%H.%m) - Making Backup to : $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz"
-              mysqldump -u $$DB_USER  -p$$DB_PASSWORD -h $$DB_HOST --all-databases | gzip > $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz
+              mysqldump -u $$DB_USER  -p$$DB_PASSWORD -h $$DB_HOST --all-databases | gzip > $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%M).sql.gz
               find $$BACKUP_PATH -mtime 7 -delete
           fi
         done
       EOF'
-    volumes:
-      - type: bind
-        source: /data/db
+    mount:
+      - type: volume
+        source: db_backup_data
         target: /data/db
     deploy:
       mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
 networks:
   db_network:
     external:
