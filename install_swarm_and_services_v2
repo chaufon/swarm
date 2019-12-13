@@ -107,3 +107,11 @@ networks:
 
 8. Deploy that file
 docker stack deploy -c backup_mysql.yml bak
+
+
+---------
+---------
+Own registry
+
+docker service create --name registry --publish target=5000,published=5000 --replicas=1 --replicas-max-per-node 1 --constraint 'node.role==manager' registry:2
+
