@@ -26,35 +26,17 @@ toughiq/mariadb-cluster
 
 (Se resalta que para este escenario no se ha instalado HAproxy, sino se usa el balanceador provisto por el mismo Swarm)
 
-5.5.- NFS Volume
+6. NFS Server conf on Manager
+/etc/exports
+#/data	10.0.0.0/8(rw,all_squash,anonuid=33,anongid=33,insecure)	
+/data	10.0.0.0/8(rw,no_root_squash,anonuid=33,anongid=33,insecure)	#VALIDAR
 
-docker volume create --driver local \
-    --opt type=nfs \
-    --opt o=addr=10.132.178.251,rw \
-    --opt device=:/data \
-    web_volume
+docker service create --name wp --network db_network --mount type=volume,volume-opt=o=addr=10.132.178.251,volume-opt=type=nfs,volume-opt=device=:/data,source=web_volume,target="/var/www/html/" --publish target=80,published=10000 --env WORDPRESS_DB_HOST=db_cluster --env WORDPRESS_DB_USER=wpdbuser --env WORDPRESS_DB_NAME=wpdb --env WORDPRESS_DB_PASSWORD=wpd25245767897965345343bpass --replicas=2 --replicas-max-per-node 1 --constraint 'node.role==worker' wordpress
 
-> https://docs.docker.com/engine/reference/commandline/volume_create/
-
-6. docker service create --name wp \
---network db_network \
---mount type=volume,src=web_volume,dst=/var/www/html \
---publish target=80,published=10000 \
---env WORDPRESS_DB_HOST=db_cluster \
---env WORDPRESS_DB_USER=wpdbuser \
---env WORDPRESS_DB_NAME=wpdb \
---env WORDPRESS_DB_PASSWORD=wpd25245767897965345343bpass \
---replicas=2 \
---replicas-max-per-node 1 \
---constraint 'node.role==worker' \
-wordpress
 
 
 **BACKUP**
 
-6.5 Create volume on Manager to store backups
-
-docker volume create db_backup_data
 
 
 7. Create a yml file backup_mysql.yml
