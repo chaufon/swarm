@@ -69,6 +69,12 @@ bind-address=0.0.0.0
 
 https://dev.mysql.com/doc/refman/5.5/en/query-cache-configuration.html
 
+---Reboot MariaDB Cluster---
+On Node01 or main node
+vim /var/lib/mysql/grastate.dat
+safe_to_bootstrap: 1
+
+---Reboot MariaDB Cluster---
 
 -------------------------------------------------
 -------------------------------------------------
